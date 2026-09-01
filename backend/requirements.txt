@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy
+alembic
+psycopg2-binary
+langchain
+langgraph
+langchain-google-genai
+pydantic
+python-dotenv
+chromadb
+peft
+transformers
+torch
