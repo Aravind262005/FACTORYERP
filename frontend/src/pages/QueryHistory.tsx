@@ -1,53 +1,33 @@
-import React from 'react';
-import { Search, Filter, Eye, ChevronLeft, ChevronRight, AlertTriangle, Cpu, Database } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, Eye, ChevronLeft, ChevronRight, AlertTriangle, Cpu, Database, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const QueryHistory = () => {
   const navigate = useNavigate();
 
-  const queries = [
-    {
-      id: "QRY-2023-0904",
-      title: "Analyze yield drop in Line A",
-      subtitle: "Correlation found between temperature v...",
-      date: "Oct 24, 2023",
-      time: "14:32:01",
-      status: "Resolved",
-      confidence: 94,
-      agents: ["AI", "DB"]
-    },
-    {
-      id: "QRY-2023-0891",
-      title: "Supply chain delay impact on Q4",
-      subtitle: "Insufficient data from tier-2 suppliers.",
-      date: "Oct 23, 2023",
-      time: "09:15:44",
-      status: "Unresolved",
-      confidence: 42,
-      agents: ["AI"],
-      alert: true
-    },
-    {
-      id: "QRY-2023-0879",
-      title: "Routine automated diagnostic scan compl...",
-      subtitle: "",
-      date: "Oct 22, 2023",
-      time: "23:00:00",
-      status: "Resolved",
-      confidence: 99,
-      agents: ["SYS"]
-    },
-    {
-      id: "QRY-2023-0878",
-      title: "Gearbox assembly inventory check",
-      subtitle: "Cross-referencing SAP records with ware...",
-      date: "Oct 22, 2023",
-      time: "10:05:12",
-      status: "Pending",
-      confidence: null,
-      agents: ["AI", "ER", "IoT"]
-    }
-  ];
+  const [queries, setQueries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchQueries = async () => {
+      try {
+        const res = await fetch('http://127.0.0.1:8000/queries');
+        if (res.ok) {
+          const data = await res.json();
+          setQueries(data.queries || []);
+        } else {
+          setError(`HTTP Error: ${res.status}`);
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch queries", err);
+        setError(err.message || "Failed to fetch queries");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchQueries();
+  }, []);
 
   const handleView = (q: any) => {
     if (q.status === 'Resolved') navigate(`/query/${q.id}/resolved`);
@@ -98,7 +78,27 @@ export const QueryHistory = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {queries.map((q, i) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                    <Loader2 className="animate-spin w-6 h-6 mx-auto mb-2" />
+                    Loading history...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-red-500">
+                    <AlertTriangle className="w-6 h-6 mx-auto mb-2 text-red-400" />
+                    Error loading history: {error}
+                  </td>
+                </tr>
+              ) : queries.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                    No query history found.
+                  </td>
+                </tr>
+              ) : queries.map((q, i) => (
                 <tr key={i} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-start">
@@ -115,8 +115,9 @@ export const QueryHistory = () => {
                   </td>
                   <td className="px-6 py-4">
                     {q.status === 'Resolved' && <span className="px-2.5 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">Resolved</span>}
-                    {q.status === 'Unresolved' && <span className="px-2.5 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded-full">Unresolved</span>}
-                    {q.status === 'Pending' && <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full">Pending</span>}
+                    {(q.status === 'Unresolved' || q.status === 'Error') && <span className="px-2.5 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded-full">{q.status}</span>}
+                    {(q.status === 'Pending' || q.status === 'Processing') && <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full">{q.status}</span>}
+                    {!['Resolved', 'Unresolved', 'Error', 'Pending', 'Processing'].includes(q.status) && <span className="px-2.5 py-1 bg-slate-100 text-slate-700 text-[10px] font-bold rounded-full">{q.status}</span>}
                   </td>
                   <td className="px-6 py-4">
                     {q.confidence !== null ? (
@@ -157,7 +158,7 @@ export const QueryHistory = () => {
 
         {/* Pagination */}
         <div className="p-4 border-t border-[#E2E8F0] flex items-center justify-between bg-slate-50 text-sm text-slate-500">
-          <div>Showing 1 to 4 of 128 queries</div>
+          <div>{queries.filter(q => q.status === 'Resolved').length} queries approved (Total: {queries.length})</div>
           <div className="flex items-center space-x-1">
             <button className="px-3 py-1 text-slate-400 cursor-not-allowed">Previous</button>
             <button className="w-8 h-8 flex items-center justify-center bg-primary text-white font-medium rounded">1</button>

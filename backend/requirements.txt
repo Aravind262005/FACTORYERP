@@ -12,3 +12,7 @@ chromadb
 peft
 transformers
 torch
+rank-bm25
+python-multipart
+pypdf
+python-docx

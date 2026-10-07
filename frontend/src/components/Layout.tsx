@@ -17,8 +17,6 @@ export const Layout = () => {
     { name: 'New Query', path: '/query/new', icon: <PlusSquare size={20} /> },
     { name: 'Query History', path: '/history', icon: <History size={20} /> },
     { name: 'Knowledge Base', path: '/knowledge', icon: <BookOpen size={20} /> },
-    { name: 'Audit Trail', path: '/audit', icon: <ScrollText size={20} /> },
-    { name: 'Settings', path: '/settings', icon: <Settings size={20} /> },
   ];
 
   return (

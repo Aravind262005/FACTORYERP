@@ -1,0 +1,12 @@
+# SOP-14: Emergency Procurement and Shortage Resolution
+
+## 1. Scope
+This standard operating procedure covers immediate actions to be taken by the Inventory and Procurement teams when an unexpected shortage of raw materials is detected prior to a scheduled production run.
+
+## 2. Authorized Actions for Aluminum Alloy 6061
+If a shortage of Aluminum Alloy 6061 is detected and threatens a target deadline:
+- For shortages greater than 50 units: Production must be paused or rescheduled. Supervisor approval is required.
+- For shortages of 50 units or fewer (<= 50): Expedited shipping from Supplier B is pre-authorized. Proceed with the order to meet the deadline.
+
+## 3. Other Materials
+Standard 2-week lead times apply. No expedited shipping authorized without VP approval.
