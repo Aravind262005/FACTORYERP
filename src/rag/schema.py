@@ -1,0 +1,41 @@
+from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any
+from datetime import datetime, timezone
+
+class DocumentMetadata(BaseModel):
+    document_id: str = Field(..., description="Unique identifier for the document")
+    document_name: str = Field(..., description="Name of the document")
+    document_type: str = Field(..., description="Type of document (e.g., SOP, MANUAL, SAFETY POLICY)")
+    title: Optional[str] = Field(None, description="Title of the document")
+    department: Optional[str] = Field(None, description="Relevant department")
+    machine_id: Optional[str] = Field(None, description="Relevant machine ID")
+    product_id: Optional[str] = Field(None, description="Relevant product ID")
+    material_id: Optional[str] = Field(None, description="Relevant material ID")
+    topic: Optional[str] = Field(None, description="Topic of the document")
+    revision: Optional[str] = Field(None, description="Revision or version identifier")
+    version: Optional[str] = Field(None, description="Numeric or semantic version")
+    effective_date: Optional[str] = Field(None, description="Date the document becomes effective")
+    expiry_date: Optional[str] = Field(None, description="Date the document expires")
+    authority_level: str = Field("current", description="Authority level (e.g., current, superseded, draft)")
+    source_file: str = Field(..., description="Original file path or URI")
+    page_count: Optional[int] = Field(None, description="Total number of pages")
+    ingestion_timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Time of ingestion")
+    checksum: str = Field(..., description="Hash of the document content for duplicate detection")
+
+class ChunkMetadata(BaseModel):
+    document_id: str = Field(..., description="ID of the parent document")
+    chunk_id: str = Field(..., description="Unique identifier for the chunk")
+    parent_id: Optional[str] = Field(None, description="ID of the parent section chunk, if hierarchical")
+    page: Optional[int] = Field(None, description="Page number where the chunk is found")
+    section: Optional[str] = Field(None, description="Section heading or number")
+    text: str = Field(..., description="Text content of the chunk")
+    document_type: str = Field(..., description="Propagated from document metadata")
+    department: Optional[str] = Field(None, description="Propagated from document metadata")
+    revision: Optional[str] = Field(None, description="Propagated from document metadata")
+    effective_date: Optional[str] = Field(None, description="Propagated from document metadata")
+    authority_level: str = Field(..., description="Propagated from document metadata")
+    machine_id: Optional[str] = Field(None, description="Propagated from document metadata")
+    product_id: Optional[str] = Field(None, description="Propagated from document metadata")
+    material_id: Optional[str] = Field(None, description="Propagated from document metadata")
+    topic: Optional[str] = Field(None, description="Propagated from document metadata")
+    source_file: str = Field(..., description="Propagated from document metadata")

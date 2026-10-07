@@ -1,10 +1,15 @@
 import React from 'react';
 import { CheckCircle2, ChevronRight, FileText, Factory, Package, Truck, Lightbulb, BookOpen, ExternalLink, ArrowRight } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 
 export const DecisionResolved = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const query = location.state?.query || "Can we complete 500 gearbox assemblies by Friday?";
+  const requiredUnits = location.state?.requiredUnits || 500;
+  const capacityAvail = location.state?.capacityAvail || 620;
+  const utilization = location.state?.utilization || 80.6;
 
   return (
     <div className="space-y-6">
@@ -40,8 +45,8 @@ export const DecisionResolved = () => {
             <Factory size={18} className="mr-2 text-slate-400" /> Production
           </div>
           <div className="space-y-4 text-sm">
-            <div className="flex justify-between"><span className="text-slate-500">Capacity:</span><span className="font-medium text-slate-900">620 units</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Utilization:</span><span className="font-medium text-slate-900">82.4%</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Capacity:</span><span className="font-medium text-slate-900">{capacityAvail} units</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Utilization:</span><span className="font-medium text-slate-900">{utilization}%</span></div>
             <div className="flex justify-between"><span className="text-slate-500">Wastage:</span><span className="font-medium text-slate-900">3.5%</span></div>
           </div>
         </div>
@@ -52,7 +57,7 @@ export const DecisionResolved = () => {
             <Package size={18} className="mr-2 text-slate-400" /> Inventory
           </div>
           <div className="space-y-4 text-sm">
-            <div className="flex justify-between"><span className="text-slate-500">ATP (Available-to-Promise):</span><span className="font-medium text-slate-900">480 units</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">ATP (Available-to-Promise):</span><span className="font-medium text-slate-900">{requiredUnits - 20} units</span></div>
             <div className="flex justify-between"><span className="text-slate-500">Shortage:</span><span className="font-bold text-error">-20 units</span></div>
             <div className="flex justify-between"><span className="text-slate-500">Reorder:</span><span className="font-medium text-slate-900">Yes — 150 units (EOQ)</span></div>
           </div>
@@ -143,9 +148,26 @@ export const DecisionResolved = () => {
       </div>
 
       <div className="flex items-center justify-end space-x-4 pt-4">
-        <button className="px-4 py-2 bg-white border border-[#E2E8F0] rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">Export as PDF</button>
-        <button className="px-4 py-2 bg-white border border-[#E2E8F0] rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">View Full Audit Trail</button>
-        <button className="px-6 py-2 bg-primary hover:bg-blue-700 rounded-lg text-sm font-medium text-white flex items-center">
+        <button 
+          onClick={async () => {
+            try {
+              await fetch('http://127.0.0.1:8000/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  query: query,
+                  status: "Resolved",
+                  confidence: 96
+                })
+              });
+              navigate('/history');
+            } catch (e) {
+              console.error(e);
+              navigate('/history');
+            }
+          }}
+          className="px-6 py-2 bg-primary hover:bg-blue-700 rounded-lg text-sm font-medium text-white flex items-center"
+        >
           Approve & Proceed <ArrowRight size={16} className="ml-2" />
         </button>
       </div>

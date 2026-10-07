@@ -1,10 +1,15 @@
 import React from 'react';
 import { ChevronRight, AlertTriangle, AlertCircle, Factory, Package, BookOpen, RefreshCw, ArrowRight } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 
 export const DecisionUnresolved = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const query = location.state?.query || "Schedule emergency production run for client AlphaCorp.";
+  const requiredUnits = location.state?.requiredUnits || 450;
+  const atp = location.state?.atp || 210;
 
   return (
     <div className="space-y-6">
@@ -37,7 +42,7 @@ export const DecisionUnresolved = () => {
           <div className="space-y-4 text-sm">
             <div className="flex justify-between items-start">
               <span className="text-slate-500 w-1/3">Source Request</span>
-              <span className="font-medium text-slate-900 text-right">Schedule emergency production run for client AlphaCorp.</span>
+              <span className="font-medium text-slate-900 text-right">{query}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Target Deadline</span>
@@ -79,9 +84,9 @@ export const DecisionUnresolved = () => {
               </div>
             </div>
             <div className="space-y-3 text-sm bg-red-50 p-3 rounded-lg border border-red-100">
-              <div className="flex justify-between"><span className="text-red-700">Requested</span><span className="font-medium text-slate-900">450 units</span></div>
-              <div className="flex justify-between font-bold text-error"><span className="">ATP Stock</span><span className="">210 units</span></div>
-              <div className="flex justify-between"><span className="text-red-700">Next Delivery</span><span className="font-medium text-error">Oct 24 (Too late)</span></div>
+              <div className="flex justify-between"><span className="text-red-700">Requested</span><span className="font-medium text-slate-900">{requiredUnits} units</span></div>
+              <div className="flex justify-between font-bold text-error"><span className="">ATP Stock</span><span className="">{atp} units</span></div>
+              <div className="flex justify-between"><span className="text-red-700">Shortage</span><span className="font-medium text-error">{requiredUnits - atp} units</span></div>
             </div>
           </div>
 
@@ -98,8 +103,8 @@ export const DecisionUnresolved = () => {
               </div>
             </div>
             <div className="space-y-3 text-sm p-3">
-              <div className="flex justify-between"><span className="text-slate-500">Line Auth</span><span className="font-medium text-slate-900">Line B Approved</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Setup Time</span><span className="font-medium text-slate-900">4.5 Hours</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Capacity</span><span className="font-medium text-slate-900">{location.state?.capacityAvail || 620} units</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Required</span><span className="font-medium text-slate-900">{requiredUnits} units</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Dependency</span><span className="font-medium text-slate-400">Awaiting Materials</span></div>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { NewQuery } from './pages/NewQuery';
 import { QueryHistory } from './pages/QueryHistory';
 import { DecisionResolved } from './pages/DecisionResolved';
 import { DecisionUnresolved } from './pages/DecisionUnresolved';
+import { KnowledgeBase } from './pages/KnowledgeBase';
 
 function App() {
   return (
@@ -17,9 +18,7 @@ function App() {
           <Route path="query/:id/unresolved" element={<DecisionUnresolved />} />
           <Route path="history" element={<QueryHistory />} />
           {/* Fallback for unused links */}
-          <Route path="knowledge" element={<div className="p-8">Knowledge Base Placeholder</div>} />
-          <Route path="audit" element={<div className="p-8">Audit Trail Placeholder</div>} />
-          <Route path="settings" element={<div className="p-8">Settings Placeholder</div>} />
+          <Route path="knowledge" element={<KnowledgeBase />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

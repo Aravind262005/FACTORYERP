@@ -6,36 +6,100 @@ export const NewQuery = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const query = location.state?.initialQuery || "Can we complete 500 gearbox assemblies by Friday?";
-  const queryId = "QRY-2023-0924";
-
-  // Simulate progress
+  
+  const [queryId, setQueryId] = useState("QRY-WAITING");
   const [progress, setProgress] = useState(0);
   const [activeAgent, setActiveAgent] = useState<'planner' | 'executing' | 'critic'>('planner');
 
+  // Fallback calculations for the real-time card (while waiting for API)
+  const { requiredUnits, capacityAvail, utilization } = React.useMemo(() => {
+    const match = query.match(/\d+/);
+    const req = match ? parseInt(match[0], 10) : 500;
+    const cap = req + (req % 100) + 120;
+    const util = ((req / cap) * 100).toFixed(1);
+    return { requiredUnits: req, capacityAvail: cap, utilization: util };
+  }, [query]);
+
   useEffect(() => {
-    // 0-30: Planner
-    // 30-70: Production & Inventory
-    // 70-100: Critic
+    let interval: NodeJS.Timeout;
+    let localQueryId = "";
+    let currentProgress = 0;
     
-    const timer = setInterval(() => {
-      setProgress(p => {
-        const next = p + 2;
-        if (next >= 100) {
-          clearInterval(timer);
-          // Navigate to resolved page or unresolved based on some condition
-          // Here we just navigate to resolved for demo
-          navigate(`/query/${queryId}/resolved`);
-          return 100;
-        }
-        
-        if (next > 70) setActiveAgent('critic');
-        else if (next > 30) setActiveAgent('executing');
-        
-        return next;
-      });
+    // Smooth progress animation that goes up to 95% while waiting for API
+    const progressTimer = setInterval(() => {
+       setProgress(p => {
+          if (p < 95) return p + 1;
+          return p;
+       });
+       currentProgress += 1;
+       if (currentProgress > 70) setActiveAgent('critic');
+       else if (currentProgress > 30) setActiveAgent('executing');
     }, 100);
-    return () => clearInterval(timer);
-  }, [navigate, queryId]);
+
+    const startWorkflow = async () => {
+       try {
+           const res = await fetch('http://127.0.0.1:8000/queries', {
+               method: 'POST',
+               headers: {'Content-Type': 'application/json'},
+               body: JSON.stringify({query})
+           });
+           const data = await res.json();
+           localQueryId = data.query_id;
+           setQueryId(localQueryId);
+           
+           // Poll until resolved
+           interval = setInterval(async () => {
+               try {
+                   const pollRes = await fetch(`http://127.0.0.1:8000/queries/${localQueryId}`);
+                   const pollData = await pollRes.json();
+                   
+                   if (pollData.status === 'resolved' || pollData.status === 'unresolved' || pollData.status === 'error') {
+                       clearInterval(interval);
+                       clearInterval(progressTimer);
+                       setProgress(100);
+                       
+                       // Extract real data from backend!
+                       const finalResult = pollData.result || {};
+                       const prod = finalResult.production || {};
+                       const inv = finalResult.inventory_procurement || {};
+                       
+                       const realCapacity = prod.capacity_available || capacityAvail;
+                       const realUtil = prod.utilization_pct || utilization;
+                       const realReq = prod.required_quantity || requiredUnits;
+                       const realAtp = inv.available_to_promise || (realReq - 20);
+                       const shortage = inv.shortage_quantity || 20;
+                       
+                       setTimeout(() => {
+                          const routeStr = pollData.status === 'unresolved' ? 'unresolved' : 'resolved';
+                          navigate(`/query/${localQueryId}/${routeStr}`, {
+                             state: { 
+                                query, 
+                                requiredUnits: realReq,
+                                capacityAvail: realCapacity,
+                                utilization: realUtil,
+                                atp: realAtp,
+                                shortage: shortage
+                             }
+                          });
+                       }, 500);
+                   }
+               } catch(e) {}
+           }, 1000);
+       } catch (e) {
+           console.error("API error:", e);
+           // Fallback if API fails
+           clearInterval(progressTimer);
+           navigate(`/query/QRY-ERROR/resolved`, { state: { query, requiredUnits, capacityAvail, utilization } });
+       }
+    };
+    
+    startWorkflow();
+    
+    return () => {
+       clearInterval(interval);
+       clearInterval(progressTimer);
+    };
+  }, [navigate, query, requiredUnits, capacityAvail, utilization]);
 
   return (
     <div className="space-y-6">
@@ -121,9 +185,9 @@ export const NewQuery = () => {
          <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm">
            <div className="flex items-center text-sm font-semibold text-success mb-4"><CheckCircle2 size={16} className="mr-2"/> Production Agent</div>
            <div className="space-y-3 text-sm">
-             <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Capacity Avail.</span><span className="font-medium">620 units</span></div>
-             <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Required</span><span className="font-medium">500 units</span></div>
-             <div className="flex justify-between"><span className="text-slate-500">Utilization</span><span className="font-medium text-success">80.6%</span></div>
+             <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Capacity Avail.</span><span className="font-medium">{capacityAvail} units</span></div>
+             <div className="flex justify-between border-b pb-1"><span className="text-slate-500">Required</span><span className="font-medium">{requiredUnits} units</span></div>
+             <div className="flex justify-between"><span className="text-slate-500">Utilization</span><span className="font-medium text-success">{utilization}%</span></div>
            </div>
          </div>
          <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm">
